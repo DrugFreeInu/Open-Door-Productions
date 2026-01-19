@@ -2,21 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DFI Scroll + Snow</title>
+  <title>DFI Scroll Test (Forced Scroll)</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       height: 100vh;
       width: 100vw;
-      background: black;
       overflow: hidden;
+      background: black;
     }
 
     .scroll-wrapper {
-      position: absolute;
-      top: 0;
-      left: 0;
       height: 100vh;
       width: 100vw;
       overflow-x: auto;
@@ -27,7 +24,6 @@
 
     .bg-image {
       height: 100vh;
-      width: auto;
       display: inline-block;
     }
 
@@ -46,8 +42,9 @@
 <body>
 
   <div class="scroll-wrapper">
-    <!-- Make sure your image is wider than the screen -->
-    <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png" alt="DFI Door">
+    <!-- Two images to force scroll -->
+    <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png">
+    <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png">
   </div>
 
   <iframe src="snow.html" class="snow-overlay"></iframe>
