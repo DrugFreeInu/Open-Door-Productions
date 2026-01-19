@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DFI Snow Scroll Fix</title>
+  <title>DFI Main</title>
   <style>
     html, body {
       margin: 0;
@@ -23,21 +23,19 @@
 
     .bg-image {
       height: 100vh;
-      display: inline-block;
       object-fit: contain;
+      display: inline-block;
     }
 
-    #snow-canvas {
+    iframe.snow-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
+      border: none;
       pointer-events: none;
       z-index: 9999;
-      will-change: transform;
-      contain: strict;
-      transform: translateZ(0);
     }
   </style>
 </head>
@@ -47,52 +45,7 @@
     <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png" alt="DFI Door">
   </div>
 
-  <canvas id="snow-canvas"></canvas>
-
-  <script>
-    const canvas = document.getElementById('snow-canvas');
-    const ctx = canvas.getContext('2d');
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    const particles = Array.from({ length: 150 }, () => ({
-      baseX: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      r: Math.random() * 2 + 1,
-      d: Math.random() * 1 + 0.5
-    }));
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.beginPath();
-
-      const scrollOffset = window.scrollX; // horizontal scroll
-
-      for (const p of particles) {
-        const x = p.baseX - scrollOffset;
-        ctx.moveTo(x, p.y);
-        ctx.arc(x, p.y, p.r, 0, Math.PI * 2);
-        p.y += p.d;
-
-        if (p.y > canvas.height) {
-          p.y = -5;
-          p.baseX = Math.random() * window.innerWidth + scrollOffset; // respect scroll position
-        }
-      }
-
-      ctx.fill();
-      requestAnimationFrame(draw);
-    }
-
-    draw();
-  </script>
+  <iframe src="snow.html" class="snow-overlay"></iframe>
 
 </body>
 </html>
