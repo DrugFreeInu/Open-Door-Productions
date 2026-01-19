@@ -2,18 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DFI Snow Overlay Scrollable</title>
-
+  <title>DFI Scroll + Snow</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       background: black;
       overflow: hidden;
-      overscroll-behavior: none;
+      height: 100%;
     }
 
-    /* Scrollable image layer */
     .scroll-wrapper {
       position: absolute;
       inset: 0;
@@ -21,23 +19,22 @@
       overflow-y: hidden;
       white-space: nowrap;
       z-index: 1;
-      -webkit-overflow-scrolling: touch;
     }
 
     .bg-image {
       height: 100vh;
-      object-fit: contain;
       display: inline-block;
+      object-fit: contain;
     }
 
-    /* Snow layer — HARD isolated */
     #snow-canvas {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       pointer-events: none;
       z-index: 9999;
-
-      /* 🔒 CRITICAL: isolate rendering */
       will-change: transform;
       contain: strict;
       transform: translateZ(0);
@@ -47,11 +44,7 @@
 <body>
 
   <div class="scroll-wrapper">
-    <img
-      class="bg-image"
-      src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png"
-      alt="DFI Door"
-    >
+    <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png" alt="DFI Door">
   </div>
 
   <canvas id="snow-canvas"></canvas>
@@ -64,8 +57,9 @@
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
-    resize();
+
     window.addEventListener('resize', resize);
+    resize();
 
     const particles = Array.from({ length: 150 }, () => ({
       x: Math.random() * canvas.width,
@@ -74,7 +68,7 @@
       d: Math.random() * 1 + 0.5
     }));
 
-    function update() {
+    function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = 'white';
       ctx.beginPath();
@@ -85,16 +79,16 @@
         p.y += p.d;
 
         if (p.y > canvas.height) {
-          p.y = -5;
+          p.y = 0;
           p.x = Math.random() * canvas.width;
         }
       }
 
       ctx.fill();
-      requestAnimationFrame(update);
+      requestAnimationFrame(draw);
     }
 
-    update();
+    draw();
   </script>
 
 </body>
