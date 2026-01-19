@@ -2,35 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DFI Scroll Test</title>
+  <title>DFI Scroll + Snow</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
       height: 100vh;
+      overflow: hidden;
+      background: black;
     }
 
     .scroll-wrapper {
-      width: 100vw;
       height: 100vh;
+      width: 100vw;
       overflow-x: auto;
       overflow-y: hidden;
       white-space: nowrap;
-      background: black;
+      z-index: 1;
     }
 
     .bg-image {
       height: 100vh;
+      width: auto;
       display: inline-block;
+      object-fit: cover;
+    }
+
+    iframe.snow-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      pointer-events: none;
+      z-index: 9999;
     }
   </style>
 </head>
 <body>
 
   <div class="scroll-wrapper">
-    <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png" alt="Wide Image">
+    <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png" alt="DFI Door">
   </div>
+
+  <iframe src="snow.html" class="snow-overlay"></iframe>
 
 </body>
 </html>
