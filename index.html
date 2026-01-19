@@ -26,8 +26,8 @@
 
     .bg-image {
       height: 100vh;
+      width: auto;
       display: inline-block;
-      object-fit: contain;
     }
 
     iframe.snow-overlay {
@@ -37,7 +37,7 @@
       width: 100vw;
       height: 100vh;
       border: none;
-      pointer-events: none; /* ✅ allows scroll through */
+      pointer-events: none;
       z-index: 9999;
     }
   </style>
@@ -45,7 +45,6 @@
 <body>
 
   <div class="scroll-wrapper">
-    <!-- Use a very wide image or multiple images here -->
     <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png" alt="DFI Door">
   </div>
 
