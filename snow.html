@@ -2,52 +2,116 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Snow Overlay</title>
-
-  <!-- 🔒 CRITICAL: lock viewport behavior -->
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>DFI Snow Scene</title>
 
   <style>
-    /* ===== Hard lock document ===== */
     html, body {
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background: transparent;
-
-      /* stop Safari gesture attachment */
+      background: black;
       touch-action: none;
-      overscroll-behavior: none;
-
-      /* detach from layout */
-      position: fixed;
-      inset: 0;
     }
 
-    /* ===== Canvas pinned to viewport ===== */
-    canvas {
+    /* ===== Viewport ===== */
+    .viewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* ===== Image pan layer ===== */
+    .pan-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      will-change: transform;
+      transform: translateX(0);
+      cursor: grab;
+    }
+
+    .pan-layer:active {
+      cursor: grabbing;
+    }
+
+    .bg-image {
+      height: 100vh;
+      width: auto;
+      display: block;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* ===== Snow overlay ===== */
+    #snow-canvas {
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
       pointer-events: none;
-      z-index: 1;
-
-      /* force independent GPU layer */
-      transform: translate3d(0,0,0);
-      will-change: transform;
+      z-index: 9999;
     }
   </style>
 </head>
 
 <body>
+
+  <!-- Image scene -->
+  <div class="viewport">
+    <div class="pan-layer" id="pan">
+      <img
+        class="bg-image"
+        src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png"
+        draggable="false"
+      >
+    </div>
+  </div>
+
+  <!-- Snow overlay -->
   <canvas id="snow-canvas"></canvas>
 
   <script>
-    const canvas = document.getElementById('snow-canvas');
-    const ctx = canvas.getContext('2d');
+    /* ======================
+       IMAGE PAN LOGIC
+    ====================== */
+    const pan = document.getElementById("pan");
+
+    let x = 0;
+    let startX = 0;
+    let dragging = false;
+
+    window.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      x -= e.deltaY;
+      pan.style.transform = `translateX(${x}px)`;
+    }, { passive: false });
+
+    window.addEventListener("touchstart", (e) => {
+      dragging = true;
+      startX = e.touches[0].clientX;
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (e) => {
+      if (!dragging) return;
+      const dx = e.touches[0].clientX - startX;
+      pan.style.transform = `translateX(${x + dx}px)`;
+    }, { passive: true });
+
+    window.addEventListener("touchend", (e) => {
+      if (!dragging) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      x += dx;
+      dragging = false;
+    });
+
+    /* ======================
+       SNOW PARTICLES
+    ====================== */
+    const canvas = document.getElementById("snow-canvas");
+    const ctx = canvas.getContext("2d");
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -55,16 +119,16 @@
     }
 
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener("resize", resizeCanvas);
 
     const particles = Array.from({ length: 150 }, () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
       r: Math.random() * 2 + 1,
       d: Math.random() * 1 + 0.5
     }));
 
-    function draw() {
+    function drawSnow() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "white";
       ctx.beginPath();
@@ -77,20 +141,16 @@
 
         if (p.y > canvas.height) {
           p.y = -5;
-          p.x = Math.random() * window.innerWidth;
+          p.x = Math.random() * canvas.width;
         }
       }
 
       ctx.fill();
-      requestAnimationFrame(draw);
+      requestAnimationFrame(drawSnow);
     }
 
-    draw();
-
-    /* 🔒 FINAL SAFETY: block all touch inside iframe */
-    document.addEventListener('touchmove', e => {
-      e.preventDefault();
-    }, { passive: false });
+    drawSnow();
   </script>
+
 </body>
 </html>
