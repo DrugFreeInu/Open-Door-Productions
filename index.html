@@ -14,14 +14,16 @@
       background: black;
     }
 
+    /* ===== Horizontal pan layer ===== */
     .scroll-wrapper {
+      position: relative;
       height: 100vh;
       width: 100vw;
       overflow-x: auto;
       overflow-y: hidden;
       white-space: nowrap;
-      scroll-behavior: smooth;
       cursor: grab;
+      z-index: 1;
     }
 
     .scroll-wrapper:active {
@@ -36,49 +38,64 @@
       pointer-events: none;
     }
 
-    iframe.snow-overlay {
+    /* ===== Snow locked to viewport ===== */
+    .snow-layer {
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+
+      /* critical: isolate from scroll transforms (Safari/iOS fix) */
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .snow-layer iframe {
       width: 100vw;
       height: 100vh;
       border: none;
-      pointer-events: none;
-      z-index: 9999;
     }
   </style>
 </head>
 
 <body>
 
+  <!-- Horizontal scrolling image -->
   <div class="scroll-wrapper" id="scroll">
-    <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png">
+    <img
+      class="bg-image"
+      src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png"
+      draggable="false"
+    >
   </div>
 
-  <iframe src="snow.html" class="snow-overlay"></iframe>
+  <!-- Snow overlay (never moves) -->
+  <div class="snow-layer">
+    <iframe src="snow.html"></iframe>
+  </div>
 
   <script>
     const scroll = document.getElementById("scroll");
 
-    // Inverted mouse wheel / trackpad
+    /* Inverted mouse wheel / trackpad */
     scroll.addEventListener("wheel", (e) => {
       e.preventDefault();
       scroll.scrollLeft -= e.deltaY;
     }, { passive: false });
 
-    // Touch drag inversion (mobile)
+    /* Inverted touch drag (mobile) */
     let startX = 0;
     let scrollStart = 0;
 
     scroll.addEventListener("touchstart", (e) => {
       startX = e.touches[0].pageX;
       scrollStart = scroll.scrollLeft;
-    });
+    }, { passive: true });
 
     scroll.addEventListener("touchmove", (e) => {
       const dx = e.touches[0].pageX - startX;
       scroll.scrollLeft = scrollStart - dx;
-    });
+    }, { passive: true });
   </script>
 
 </body>
