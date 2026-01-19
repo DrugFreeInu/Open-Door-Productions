@@ -1,1 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DFI Snow Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      overflow: hidden;
+    }
 
+    .bg-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png" alt="DFI Curtain Background">
+  <canvas id="snow-canvas"></canvas>
+
+  <script src="snow.js"></script>
+
+</body>
+</html>
