@@ -8,50 +8,49 @@
     html, body {
       margin: 0;
       padding: 0;
-      height: 100vh;
       width: 100vw;
+      height: 100vh;
       overflow: hidden;
       background: black;
-
-      /* 🔒 CRITICAL: stop iOS scroll chaining */
-      overscroll-behavior: none;
       touch-action: none;
     }
 
-    /* ===== Horizontal pan layer ===== */
-    .scroll-wrapper {
-      position: relative;
-      height: 100vh;
-      width: 100vw;
+    /* ===== Viewport ===== */
+    .viewport {
+      position: fixed;
+      inset: 0;
       overflow: hidden;
-      white-space: nowrap;
-      cursor: grab;
-      z-index: 1;
-
-      /* allow ONLY horizontal pan logic */
-      touch-action: none;
     }
 
-    .scroll-wrapper:active {
+    /* ===== Image layer (NO SCROLLING) ===== */
+    .pan-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      will-change: transform;
+      transform: translateX(0);
+      cursor: grab;
+    }
+
+    .pan-layer:active {
       cursor: grabbing;
     }
 
     .bg-image {
       height: 100vh;
       width: auto;
-      display: inline-block;
+      display: block;
       user-select: none;
       pointer-events: none;
     }
 
-    /* ===== Snow locked to viewport ===== */
+    /* ===== Snow (truly fixed forever) ===== */
     .snow-layer {
       position: fixed;
       inset: 0;
-      z-index: 9999;
       pointer-events: none;
-
-      /* 🔒 force independent compositing layer */
+      z-index: 9999;
       transform: translate3d(0,0,0);
       will-change: transform;
     }
@@ -60,54 +59,58 @@
       width: 100vw;
       height: 100vh;
       border: none;
-      pointer-events: none;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Horizontal scrolling image -->
-  <div class="scroll-wrapper" id="scroll">
-    <img
-      class="bg-image"
-      src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png"
-      draggable="false"
-    >
+  <div class="viewport">
+    <div class="pan-layer" id="pan">
+      <img
+        class="bg-image"
+        src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png"
+        draggable="false"
+      >
+    </div>
   </div>
 
-  <!-- Snow overlay (ABSOLUTELY fixed) -->
   <div class="snow-layer">
     <iframe src="snow.html"></iframe>
   </div>
 
   <script>
-    const scroll = document.getElementById("scroll");
+    const pan = document.getElementById("pan");
 
-    /* Prevent ANY page-level touch movement */
-    document.addEventListener("touchmove", (e) => {
-      e.preventDefault();
-    }, { passive: false });
-
-    /* Inverted mouse wheel / trackpad */
-    scroll.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      scroll.scrollLeft -= e.deltaY;
-    }, { passive: false });
-
-    /* Manual touch pan (ONLY place touch is handled) */
+    let x = 0;
     let startX = 0;
-    let scrollStart = 0;
+    let dragging = false;
 
-    scroll.addEventListener("touchstart", (e) => {
+    /* Mouse / trackpad */
+    window.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      x -= e.deltaY; // inverted
+      pan.style.transform = `translateX(${x}px)`;
+    }, { passive: false });
+
+    /* Touch */
+    window.addEventListener("touchstart", (e) => {
+      dragging = true;
       startX = e.touches[0].clientX;
-      scrollStart = scroll.scrollLeft;
     }, { passive: true });
 
-    scroll.addEventListener("touchmove", (e) => {
+    window.addEventListener("touchmove", (e) => {
+      if (!dragging) return;
       const dx = e.touches[0].clientX - startX;
-      scroll.scrollLeft = scrollStart - dx;
+      pan.style.transform = `translateX(${x + dx}px)`;
     }, { passive: true });
+
+    window.addEventListener("touchend", (e) => {
+      if (!dragging) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      x += dx;
+      dragging = false;
+    });
   </script>
 
 </body>
