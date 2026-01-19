@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DFI Scroll Test (Forced Scroll)</title>
+  <title>DFI Scroll Test (Forced Horizontal)</title>
   <style>
     html, body {
       margin: 0;
@@ -19,7 +19,7 @@
       overflow-x: auto;
       overflow-y: hidden;
       white-space: nowrap;
-      z-index: 1;
+      scroll-behavior: smooth;
     }
 
     .bg-image {
@@ -41,13 +41,21 @@
 </head>
 <body>
 
-  <div class="scroll-wrapper">
-    <!-- Two images to force scroll -->
+  <div class="scroll-wrapper" id="scroll">
     <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png">
     <img class="bg-image" src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png">
   </div>
 
   <iframe src="snow.html" class="snow-overlay"></iframe>
+
+  <script>
+    const scroll = document.getElementById("scroll");
+
+    scroll.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      scroll.scrollLeft += e.deltaY;
+    }, { passive: false });
+  </script>
 
 </body>
 </html>
