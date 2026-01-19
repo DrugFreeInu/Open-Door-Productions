@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DFI Inverted Horizontal Pan</title>
+  <title>DFI World Snow Pan</title>
 
   <style>
     html, body {
@@ -15,14 +15,14 @@
       touch-action: none;
     }
 
-    /* ===== Viewport ===== */
+    /* ===== Viewport (camera) ===== */
     .viewport {
       position: fixed;
       inset: 0;
       overflow: hidden;
     }
 
-    /* ===== Image layer ===== */
+    /* ===== Scene (moves) ===== */
     .pan-layer {
       position: absolute;
       top: 0;
@@ -45,14 +45,13 @@
       pointer-events: none;
     }
 
-    /* ===== Snow (true overlay) ===== */
-    #snow-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
+    /* ===== World-space snow ===== */
+    .snow-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
       height: 100vh;
       pointer-events: none;
-      z-index: 9999;
     }
   </style>
 </head>
@@ -61,19 +60,25 @@
 
   <div class="viewport">
     <div class="pan-layer" id="pan">
+
+      <!-- Background image -->
       <img
+        id="bg"
         class="bg-image"
         src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png"
         draggable="false"
       >
+
+      <!-- Snow lives IN the scene -->
+      <canvas id="snow" class="snow-canvas"></canvas>
+
     </div>
   </div>
 
-  <!-- Snow canvas (NO iframe) -->
-  <canvas id="snow-canvas"></canvas>
-
   <script>
-    /* ===== PAN LOGIC ===== */
+    /* ======================
+       PAN LOGIC
+    ====================== */
     const pan = document.getElementById("pan");
 
     let x = 0;
@@ -104,20 +109,24 @@
       dragging = false;
     });
 
-    /* ===== SNOW LOGIC ===== */
-    const canvas = document.getElementById("snow-canvas");
+    /* ======================
+       WORLD SNOW
+    ====================== */
+    const img = document.getElementById("bg");
+    const canvas = document.getElementById("snow");
     const ctx = canvas.getContext("2d");
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
+    img.onload = () => {
+      canvas.width = img.offsetWidth;
       canvas.height = window.innerHeight;
-    }
+    };
 
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("resize", () => {
+      canvas.height = window.innerHeight;
+    });
 
-    const particles = Array.from({ length: 150 }, () => ({
-      x: Math.random() * window.innerWidth,
+    const particles = Array.from({ length: 400 }, () => ({
+      x: Math.random() * 5000,
       y: Math.random() * window.innerHeight,
       r: Math.random() * 2 + 1,
       d: Math.random() * 1 + 0.5
@@ -131,11 +140,12 @@
       for (const p of particles) {
         ctx.moveTo(p.x, p.y);
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+
         p.y += p.d;
 
         if (p.y > canvas.height) {
           p.y = -5;
-          p.x = Math.random() * window.innerWidth;
+          p.x = Math.random() * canvas.width;
         }
       }
 
