@@ -12,6 +12,10 @@
       width: 100vw;
       overflow: hidden;
       background: black;
+
+      /* 🔒 CRITICAL: stop iOS scroll chaining */
+      overscroll-behavior: none;
+      touch-action: none;
     }
 
     /* ===== Horizontal pan layer ===== */
@@ -19,11 +23,13 @@
       position: relative;
       height: 100vh;
       width: 100vw;
-      overflow-x: auto;
-      overflow-y: hidden;
+      overflow: hidden;
       white-space: nowrap;
       cursor: grab;
       z-index: 1;
+
+      /* allow ONLY horizontal pan logic */
+      touch-action: none;
     }
 
     .scroll-wrapper:active {
@@ -45,8 +51,8 @@
       z-index: 9999;
       pointer-events: none;
 
-      /* critical: isolate from scroll transforms (Safari/iOS fix) */
-      transform: translateZ(0);
+      /* 🔒 force independent compositing layer */
+      transform: translate3d(0,0,0);
       will-change: transform;
     }
 
@@ -54,6 +60,7 @@
       width: 100vw;
       height: 100vh;
       border: none;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -69,7 +76,7 @@
     >
   </div>
 
-  <!-- Snow overlay (never moves) -->
+  <!-- Snow overlay (ABSOLUTELY fixed) -->
   <div class="snow-layer">
     <iframe src="snow.html"></iframe>
   </div>
@@ -77,23 +84,28 @@
   <script>
     const scroll = document.getElementById("scroll");
 
+    /* Prevent ANY page-level touch movement */
+    document.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
     /* Inverted mouse wheel / trackpad */
     scroll.addEventListener("wheel", (e) => {
       e.preventDefault();
       scroll.scrollLeft -= e.deltaY;
     }, { passive: false });
 
-    /* Inverted touch drag (mobile) */
+    /* Manual touch pan (ONLY place touch is handled) */
     let startX = 0;
     let scrollStart = 0;
 
     scroll.addEventListener("touchstart", (e) => {
-      startX = e.touches[0].pageX;
+      startX = e.touches[0].clientX;
       scrollStart = scroll.scrollLeft;
     }, { passive: true });
 
     scroll.addEventListener("touchmove", (e) => {
-      const dx = e.touches[0].pageX - startX;
+      const dx = e.touches[0].clientX - startX;
       scroll.scrollLeft = scrollStart - dx;
     }, { passive: true });
   </script>
