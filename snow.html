@@ -3,26 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <title>Snow Overlay</title>
+
+  <!-- 🔒 CRITICAL: lock viewport behavior -->
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no">
+
   <style>
+    /* ===== Hard lock document ===== */
     html, body {
       margin: 0;
       padding: 0;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
       background: transparent;
-      height: 100%;
+
+      /* stop Safari gesture attachment */
+      touch-action: none;
+      overscroll-behavior: none;
+
+      /* detach from layout */
+      position: fixed;
+      inset: 0;
     }
 
+    /* ===== Canvas pinned to viewport ===== */
     canvas {
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100vw;
       height: 100vh;
       pointer-events: none;
       z-index: 1;
+
+      /* force independent GPU layer */
+      transform: translate3d(0,0,0);
+      will-change: transform;
     }
   </style>
 </head>
+
 <body>
   <canvas id="snow-canvas"></canvas>
 
@@ -53,6 +72,7 @@
       for (const p of particles) {
         ctx.moveTo(p.x, p.y);
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+
         p.y += p.d;
 
         if (p.y > canvas.height) {
@@ -66,6 +86,11 @@
     }
 
     draw();
+
+    /* 🔒 FINAL SAFETY: block all touch inside iframe */
+    document.addEventListener('touchmove', e => {
+      e.preventDefault();
+    }, { passive: false });
   </script>
 </body>
 </html>
