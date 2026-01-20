@@ -15,14 +15,12 @@
       touch-action: none;
     }
 
-    /* ===== Viewport ===== */
     .viewport {
       position: fixed;
       inset: 0;
       overflow: hidden;
     }
 
-    /* ===== Image pan layer ===== */
     .pan-layer {
       position: absolute;
       top: 0;
@@ -42,7 +40,6 @@
       pointer-events: none;
     }
 
-    /* ===== Snow overlay (fixed to screen) ===== */
     #snow-canvas {
       position: fixed;
       inset: 0;
@@ -55,7 +52,7 @@
 </head>
 
 <body>
-  <!-- Image scene -->
+
   <div class="viewport">
     <div class="pan-layer" id="pan">
       <img
@@ -68,16 +65,11 @@
     </div>
   </div>
 
-  <!-- Snow overlay -->
   <canvas id="snow-canvas"></canvas>
 
   <script>
-    /* ======================
-       SETUP
-    ====================== */
     const pan = document.getElementById("pan");
     const img = document.getElementById("bg");
-
     const canvas = document.getElementById("snow-canvas");
     const ctx = canvas.getContext("2d");
 
@@ -85,24 +77,20 @@
     let viewH = window.innerHeight;
     let sceneWidth = 0;
 
-    // Pan state
-    let x = 0;          // committed pan
-    let currentX = 0;   // actual pan shown (includes live drag)
+    let x = 0;
+    let currentX = 0;
     let startX = 0;
     let dragging = false;
 
     function measureSceneWidth() {
-      // Displayed width of the panorama at height: 100vh
       const w = img.getBoundingClientRect().width;
       if (w) sceneWidth = w;
     }
 
     function clampPan(nx) {
-      // Keep the image within bounds (no black gaps)
       if (!sceneWidth || sceneWidth <= viewW) return 0;
-      const minX = viewW - sceneWidth; // negative
-      const maxX = 0;
-      return Math.min(maxX, Math.max(minX, nx));
+      const minX = viewW - sceneWidth;
+      return Math.min(0, Math.max(minX, nx));
     }
 
     function setPan(nx) {
@@ -110,54 +98,44 @@
       pan.style.transform = `translateX(${currentX}px)`;
     }
 
-    /* ======================
-       PAN CONTROLS
-    ====================== */
-    window.addEventListener("wheel", (e) => {
+    window.addEventListener("wheel", e => {
       e.preventDefault();
       x = clampPan(x - e.deltaY);
       setPan(x);
     }, { passive: false });
 
-    window.addEventListener("touchstart", (e) => {
+    window.addEventListener("touchstart", e => {
       dragging = true;
       startX = e.touches[0].clientX;
     }, { passive: true });
 
-    window.addEventListener("touchmove", (e) => {
+    window.addEventListener("touchmove", e => {
       if (!dragging) return;
-      const dx = e.touches[0].clientX - startX;
-      setPan(x + dx);
+      setPan(x + (e.touches[0].clientX - startX));
     }, { passive: true });
 
-    window.addEventListener("touchend", (e) => {
+    window.addEventListener("touchend", e => {
       if (!dragging) return;
-      const dx = e.changedTouches[0].clientX - startX;
-      x = clampPan(x + dx);
+      x = clampPan(x + (e.changedTouches[0].clientX - startX));
       setPan(x);
       dragging = false;
     });
 
-    /* ======================
-       WORLD-WIDTH SNOW
-       (particles exist across the full image width,
-        but we render only the viewport slice)
-    ====================== */
     let particles = [];
-    const BASE_COUNT = 150;   // ~flakes visible per screen
-    const MAX_COUNT  = 1500;  // safety cap for performance
+    const BASE_COUNT = 150;
+    const MAX_COUNT = 1500;
 
     function initParticles() {
-      if (!sceneWidth) return;
+      // 🔑 critical fix: block bad spawn window
+      if (!sceneWidth || sceneWidth <= viewW) return;
 
-      // Keep density roughly constant no matter how wide the world is
       const count = Math.min(
         MAX_COUNT,
         Math.max(BASE_COUNT, Math.round(BASE_COUNT * (sceneWidth / viewW)))
       );
 
       particles = Array.from({ length: count }, () => ({
-        x: Math.random() * sceneWidth,   // WORLD X (0..sceneWidth)
+        x: Math.random() * sceneWidth,
         y: Math.random() * viewH,
         r: Math.random() * 2 + 1,
         d: Math.random() * 1 + 0.5
@@ -168,7 +146,6 @@
       viewW = window.innerWidth;
       viewH = window.innerHeight;
 
-      // Retina-safe canvas
       const dpr = window.devicePixelRatio || 1;
       canvas.width  = Math.round(viewW * dpr);
       canvas.height = Math.round(viewH * dpr);
@@ -176,14 +153,13 @@
       canvas.style.height = viewH + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Re-measure panorama width (depends on 100vh)
       measureSceneWidth();
 
-      // Clamp pan to new bounds
       x = clampPan(x);
       setPan(x);
 
-      // Rebuild snow for correct density
+      // 🔑 kill any bad leftovers
+      particles.length = 0;
       initParticles();
     }
 
@@ -197,19 +173,15 @@
       const margin = 10;
 
       for (const p of particles) {
-        // WORLD -> SCREEN (key line)
         const sx = p.x + currentX;
 
-        // Only draw what’s in/near the viewport
         if (sx >= -margin && sx <= viewW + margin) {
           ctx.moveTo(sx, p.y);
           ctx.arc(sx, p.y, p.r, 0, Math.PI * 2);
         }
 
-        // Fall
         p.y += p.d;
 
-        // Respawn at top, anywhere in the WORLD width
         if (p.y > viewH + margin) {
           p.y = -margin;
           p.x = Math.random() * sceneWidth;
@@ -220,9 +192,7 @@
       requestAnimationFrame(drawSnow);
     }
 
-    // Start once the image has real dimensions
     function start() {
-      // run on next frame to ensure layout is ready
       requestAnimationFrame(() => {
         resizeAll();
         drawSnow();
@@ -232,5 +202,6 @@
     if (img.complete && img.naturalWidth) start();
     else img.addEventListener("load", start);
   </script>
+
 </body>
 </html>
