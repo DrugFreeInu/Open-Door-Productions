@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DFI Backstage Code</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: black;
+      font-family: monospace;
+    }
+
+    /* ===== Backstage canvas ===== */
+    .code-stage {
+      position: fixed;
+      inset: 0;
+      background: black;
+    }
+
+    /* ===== Floating code lines ===== */
+    .code-line {
+      position: absolute;
+      color: rgba(180, 180, 180, 0.35);
+      font-size: 14px;
+      white-space: nowrap;
+      user-select: none;
+      pointer-events: none;
+      animation: drift linear infinite;
+    }
+
+    @keyframes drift {
+      from {
+        transform: translateY(110vh);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.35;
+      }
+      to {
+        transform: translateY(-20vh);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="code-stage" id="stage"></div>
+
+  <script>
+    const stage = document.getElementById("stage");
+
+    const snippets = [
+      "translateX(x)",
+      "requestAnimationFrame(loop)",
+      "ctx.clearRect(0,0,w,h)",
+      "will-change: transform;",
+      "position: absolute;",
+      "let particles = []",
+      "if (y > height) reset();",
+      "overflow: hidden;",
+      "background: black;",
+      "pointer-events: none;",
+      "z-index: 0;",
+      "scene > reality",
+      "backstage === true",
+      "this is not the world"
+    ];
+
+    function spawnLine() {
+      const el = document.createElement("div");
+      el.className = "code-line";
+      el.textContent = snippets[Math.floor(Math.random() * snippets.length)];
+
+      el.style.left = Math.random() * 100 + "vw";
+      el.style.animationDuration = 10 + Math.random() * 20 + "s";
+      el.style.fontSize = 12 + Math.random() * 6 + "px";
+
+      stage.appendChild(el);
+
+      setTimeout(() => {
+        el.remove();
+      }, 30000);
+    }
+
+    setInterval(spawnLine, 400);
+  </script>
+
+</body>
+</html>
