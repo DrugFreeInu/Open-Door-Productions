@@ -22,12 +22,21 @@
       overflow: hidden;
     }
 
+    /* ===== Backstage (ALWAYS EXISTS) ===== */
+    .backstage {
+      position: absolute;
+      inset: 0;
+      background: black;
+      z-index: 0;
+    }
+
     /* ===== Scene (moves) ===== */
     .pan-layer {
       position: absolute;
       top: 0;
       left: 0;
       height: 100vh;
+      z-index: 1;
       will-change: transform;
       transform: translateX(0);
       cursor: grab;
@@ -59,6 +68,11 @@
 <body>
 
   <div class="viewport">
+
+    <!-- Backstage layer (behind everything) -->
+    <div class="backstage"></div>
+
+    <!-- Moving world -->
     <div class="pan-layer" id="pan">
 
       <!-- Background image -->
@@ -110,7 +124,7 @@
     });
 
     /* ======================
-       WORLD SNOW (FIXED)
+       WORLD SNOW
     ====================== */
     const img = document.getElementById("bg");
     const canvas = document.getElementById("snow");
@@ -122,7 +136,6 @@
       canvas.width = img.offsetWidth;
       canvas.height = window.innerHeight;
 
-      // rebuild particles to match real world width
       particles = Array.from({ length: 400 }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
