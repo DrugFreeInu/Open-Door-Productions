@@ -22,12 +22,22 @@
       overflow: hidden;
     }
 
-    /* ===== Backstage (ALWAYS EXISTS) ===== */
+    /* ===== Backstage (base void) ===== */
     .backstage {
       position: absolute;
       inset: 0;
       background: black;
       z-index: 0;
+    }
+
+    /* ===== Backstage code layer ===== */
+    .code-layer {
+      position: absolute;
+      inset: 0;
+      border: none;
+      background: transparent;
+      z-index: 0;
+      pointer-events: none;
     }
 
     /* ===== Scene (moves) ===== */
@@ -69,8 +79,15 @@
 
   <div class="viewport">
 
-    <!-- Backstage layer (behind everything) -->
+    <!-- Base backstage void -->
     <div class="backstage"></div>
+
+    <!-- Floating code in the void -->
+    <iframe
+      src="code.html"
+      class="code-layer"
+      tabindex="-1"
+    ></iframe>
 
     <!-- Moving world -->
     <div class="pan-layer" id="pan">
