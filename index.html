@@ -15,14 +15,12 @@
       touch-action: none;
     }
 
-    /* ===== Viewport (camera) ===== */
     .viewport {
       position: fixed;
       inset: 0;
       overflow: hidden;
     }
 
-    /* ===== Backstage (base void) ===== */
     .backstage {
       position: absolute;
       inset: 0;
@@ -30,7 +28,6 @@
       z-index: 0;
     }
 
-    /* ===== Backstage code layer ===== */
     .code-layer {
       position: absolute;
       inset: 0;
@@ -40,7 +37,6 @@
       pointer-events: none;
     }
 
-    /* ===== Scene (moves) ===== */
     .pan-layer {
       position: absolute;
       top: 0;
@@ -48,7 +44,6 @@
       height: 100vh;
       z-index: 1;
       will-change: transform;
-      transform: translateX(0);
       cursor: grab;
     }
 
@@ -64,7 +59,6 @@
       pointer-events: none;
     }
 
-    /* ===== World-space snow ===== */
     .snow-canvas {
       position: absolute;
       top: 0;
@@ -77,129 +71,116 @@
 
 <body>
 
-  <div class="viewport">
+<div class="viewport">
 
-    <!-- Base backstage void -->
-    <div class="backstage"></div>
+  <div class="backstage"></div>
 
-    <!-- Floating code in the void -->
-    <iframe
-      src="code.html"
-      class="code-layer"
-      tabindex="-1"
-    ></iframe>
+  <iframe src="code.html" class="code-layer" tabindex="-1"></iframe>
 
-    <!-- Moving world -->
-    <div class="pan-layer" id="pan">
-
-      <!-- Background image -->
-      <img
-        id="bg"
-        class="bg-image"
-        src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png"
-        draggable="false"
-      >
-
-      <!-- Snow lives IN the scene -->
-      <canvas id="snow" class="snow-canvas"></canvas>
-
-    </div>
+  <div class="pan-layer" id="pan">
+    <img
+      id="bg"
+      class="bg-image"
+      src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png"
+      draggable="false"
+    >
+    <canvas id="snow" class="snow-canvas"></canvas>
   </div>
+</div>
 
-  <script>
-    /* ======================
-       SMOOTH PAN LOGIC
-    ====================== */
-    const pan = document.getElementById("pan");
+<script>
+  /* ======================
+     SMOOTH BUT DIRECT PAN
+  ====================== */
+  const pan = document.getElementById("pan");
 
-    let currentX = 0;
-    let targetX = 0;
+  let targetX = 0;
+  let renderX = 0;
 
-    let startX = 0;
-    let dragging = false;
+  let startX = 0;
+  let baseX = 0;
+  let dragging = false;
 
-    const ease = 0.08; // lower = smoother glide
+  const smooth = 0.18; // higher = tighter / more direct
 
-    /* ----- Wheel ----- */
-    window.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      targetX -= e.deltaY * 0.8;
-    }, { passive: false });
+  /* Wheel */
+  window.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    targetX -= e.deltaY;
+  }, { passive: false });
 
-    /* ----- Touch ----- */
-    window.addEventListener("touchstart", (e) => {
-      dragging = true;
-      startX = e.touches[0].clientX;
-    }, { passive: true });
+  /* Touch */
+  window.addEventListener("touchstart", (e) => {
+    dragging = true;
+    startX = e.touches[0].clientX;
+    baseX = targetX;
+  }, { passive: true });
 
-    window.addEventListener("touchmove", (e) => {
-      if (!dragging) return;
-      const dx = e.touches[0].clientX - startX;
-      targetX = currentX + dx;
-    }, { passive: true });
+  window.addEventListener("touchmove", (e) => {
+    if (!dragging) return;
+    const dx = e.touches[0].clientX - startX;
+    targetX = baseX + dx;
+  }, { passive: true });
 
-    window.addEventListener("touchend", (e) => {
-      if (!dragging) return;
-      const dx = e.changedTouches[0].clientX - startX;
-      targetX = currentX + dx;
-      dragging = false;
-    });
+  window.addEventListener("touchend", () => {
+    dragging = false;
+  });
 
-    function animatePan() {
-      currentX += (targetX - currentX) * ease;
-      pan.style.transform = `translateX(${currentX}px)`;
-      requestAnimationFrame(animatePan);
-    }
+  /* Render loop */
+  function animate() {
+    renderX += (targetX - renderX) * smooth;
+    pan.style.transform = `translateX(${renderX}px)`;
+    requestAnimationFrame(animate);
+  }
 
-    animatePan();
+  animate();
 
-    /* ======================
-       WORLD SNOW
-    ====================== */
-    const img = document.getElementById("bg");
-    const canvas = document.getElementById("snow");
-    const ctx = canvas.getContext("2d");
+  /* ======================
+     WORLD SNOW
+  ====================== */
+  const img = document.getElementById("bg");
+  const canvas = document.getElementById("snow");
+  const ctx = canvas.getContext("2d");
 
-    let particles = [];
+  let particles = [];
 
-    function resizeSnow() {
-      canvas.width = img.offsetWidth;
-      canvas.height = window.innerHeight;
+  function resizeSnow() {
+    canvas.width = img.offsetWidth;
+    canvas.height = window.innerHeight;
 
-      particles = Array.from({ length: 400 }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        r: Math.random() * 2 + 1,
-        d: Math.random() * 1 + 0.5
-      }));
-    }
+    particles = Array.from({ length: 400 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2 + 1,
+      d: Math.random() * 1 + 0.5
+    }));
+  }
 
-    img.onload = resizeSnow;
-    window.addEventListener("resize", resizeSnow);
+  img.onload = resizeSnow;
+  window.addEventListener("resize", resizeSnow);
 
-    function drawSnow() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "white";
-      ctx.beginPath();
+  function drawSnow() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.beginPath();
 
-      for (const p of particles) {
-        ctx.moveTo(p.x, p.y);
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    for (const p of particles) {
+      ctx.moveTo(p.x, p.y);
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      p.y += p.d;
 
-        p.y += p.d;
-
-        if (p.y > canvas.height) {
-          p.y = -5;
-          p.x = Math.random() * canvas.width;
-        }
+      if (p.y > canvas.height) {
+        p.y = -5;
+        p.x = Math.random() * canvas.width;
       }
-
-      ctx.fill();
-      requestAnimationFrame(drawSnow);
     }
 
-    drawSnow();
-  </script>
+    ctx.fill();
+    requestAnimationFrame(drawSnow);
+  }
+
+  drawSnow();
+</script>
 
 </body>
 </html>
