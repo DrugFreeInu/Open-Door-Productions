@@ -108,20 +108,25 @@
 
   <script>
     /* ======================
-       PAN LOGIC
+       SMOOTH PAN LOGIC
     ====================== */
     const pan = document.getElementById("pan");
 
-    let x = 0;
+    let currentX = 0;
+    let targetX = 0;
+
     let startX = 0;
     let dragging = false;
 
+    const ease = 0.08; // lower = smoother glide
+
+    /* ----- Wheel ----- */
     window.addEventListener("wheel", (e) => {
       e.preventDefault();
-      x -= e.deltaY;
-      pan.style.transform = `translateX(${x}px)`;
+      targetX -= e.deltaY * 0.8;
     }, { passive: false });
 
+    /* ----- Touch ----- */
     window.addEventListener("touchstart", (e) => {
       dragging = true;
       startX = e.touches[0].clientX;
@@ -130,15 +135,23 @@
     window.addEventListener("touchmove", (e) => {
       if (!dragging) return;
       const dx = e.touches[0].clientX - startX;
-      pan.style.transform = `translateX(${x + dx}px)`;
+      targetX = currentX + dx;
     }, { passive: true });
 
     window.addEventListener("touchend", (e) => {
       if (!dragging) return;
       const dx = e.changedTouches[0].clientX - startX;
-      x += dx;
+      targetX = currentX + dx;
       dragging = false;
     });
+
+    function animatePan() {
+      currentX += (targetX - currentX) * ease;
+      pan.style.transform = `translateX(${currentX}px)`;
+      requestAnimationFrame(animatePan);
+    }
+
+    animatePan();
 
     /* ======================
        WORLD SNOW
