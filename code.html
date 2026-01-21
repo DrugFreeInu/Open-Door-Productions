@@ -1,96 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>DFI Backstage Code</title>
+<meta charset="UTF-8">
+<title>DFI Backstage Code — Horizontal Drift</title>
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background: black;
-      font-family: monospace;
-    }
+<style>
+html, body {
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  background: black;
+  overflow: hidden;
+  font-family: monospace;
+}
 
-    /* ===== Backstage canvas ===== */
-    .code-stage {
-      position: fixed;
-      inset: 0;
-      background: black;
-    }
+/* ===== Backstage ===== */
+.code-stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
 
-    /* ===== Floating code lines ===== */
-    .code-line {
-      position: absolute;
-      color: rgba(180, 180, 180, 0.35);
-      font-size: 14px;
-      white-space: nowrap;
-      user-select: none;
-      pointer-events: none;
-      animation: drift linear infinite;
-    }
+/* ===== Code Lines ===== */
+.code-line {
+  position: absolute;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
 
-    @keyframes drift {
-      from {
-        transform: translateY(110vh);
-        opacity: 0;
-      }
-      10% {
-        opacity: 0.35;
-      }
-      to {
-        transform: translateY(-20vh);
-        opacity: 0;
-      }
-    }
-  </style>
+  color: rgba(220, 230, 255, 0.75);
+  text-shadow:
+    0 0 6px rgba(180, 200, 255, 0.4),
+    0 0 12px rgba(120, 160, 255, 0.25);
+
+  animation: driftX linear infinite;
+}
+
+/* ===== Horizontal Drift ===== */
+@keyframes driftX {
+  from {
+    transform: translateX(-20vw);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  to {
+    transform: translateX(120vw);
+    opacity: 0;
+  }
+}
+</style>
 </head>
 
 <body>
 
-  <div class="code-stage" id="stage"></div>
+<div class="code-stage" id="stage"></div>
 
-  <script>
-    const stage = document.getElementById("stage");
+<script>
+const stage = document.getElementById("stage");
 
-    const snippets = [
-      "translateX(x)",
-      "requestAnimationFrame(loop)",
-      "ctx.clearRect(0,0,w,h)",
-      "will-change: transform;",
-      "position: absolute;",
-      "let particles = []",
-      "if (y > height) reset();",
-      "overflow: hidden;",
-      "background: black;",
-      "pointer-events: none;",
-      "z-index: 0;",
-      "scene > reality",
-      "backstage === true",
-      "this is not the world"
-    ];
+const snippets = [
+  "requestAnimationFrame(loop)",
+  "translateX(scene.x)",
+  "ctx.clearRect(0,0,w,h)",
+  "will-change: transform;",
+  "pointer-events: none;",
+  "overflow: hidden;",
+  "let particles = []",
+  "scene !== world",
+  "backstage === true",
+  "this is not reality",
+  "z-index: -1;",
+  "render before meaning",
+  "the door is open"
+];
 
-    function spawnLine() {
-      const el = document.createElement("div");
-      el.className = "code-line";
-      el.textContent = snippets[Math.floor(Math.random() * snippets.length)];
+function spawnLine() {
+  const el = document.createElement("div");
+  el.className = "code-line";
+  el.textContent = snippets[Math.floor(Math.random() * snippets.length)];
 
-      el.style.left = Math.random() * 100 + "vw";
-      el.style.animationDuration = 10 + Math.random() * 20 + "s";
-      el.style.fontSize = 12 + Math.random() * 6 + "px";
+  el.style.top = Math.random() * 100 + "vh";
+  el.style.fontSize = 13 + Math.random() * 8 + "px";
+  el.style.animationDuration = 14 + Math.random() * 18 + "s";
 
-      stage.appendChild(el);
+  stage.appendChild(el);
 
-      setTimeout(() => {
-        el.remove();
-      }, 30000);
-    }
+  setTimeout(() => el.remove(), 35000);
+}
 
-    setInterval(spawnLine, 400);
-  </script>
+setInterval(spawnLine, 300);
+</script>
 
 </body>
 </html>
