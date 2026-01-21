@@ -2,23 +2,33 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>DFI Backstage Code — Horizontal Scatter</title>
+<title>DFI Backstage Code — Fixed Background</title>
 
 <style>
   html, body{
     margin:0;
-    width:100vw;
-    height:100vh;
     background:#000;
-    overflow:hidden;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   }
 
+  /* If you want your page to be scrollable, REMOVE this block.
+     If you want NO scrolling at all, keep it. */
+  /* body { overflow: hidden; height: 100vh; } */
+
+  /* === BACKGROUND LAYER: always in the viewport === */
   .code-stage{
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    overflow:hidden;
+    position: fixed;
+    inset: 0;
+    z-index: 0;            /* behind everything */
+    pointer-events: none;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* Your real site content goes above it */
+  .content{
+    position: relative;
+    z-index: 1;
   }
 
   .code-line{
@@ -27,79 +37,74 @@
     user-select:none;
     pointer-events:none;
 
-    /* brighter + readable */
-    color: rgba(235, 245, 255, 0.92);
+    color: rgba(235,245,255,0.92);
     text-shadow:
       0 0 6px rgba(180, 210, 255, 0.55),
       0 0 16px rgba(120, 170, 255, 0.35);
 
-    /* soft fade edges */
     opacity: 0;
     will-change: left, opacity;
-    animation-name: driftLR;
-    animation-timing-function: linear;
-    animation-fill-mode: both;
+    animation: driftLR linear infinite;
   }
 
   @keyframes driftLR{
-    0%   { left: -30vw; opacity: 0; }
-    10%  { opacity: 0.95; }
-    90%  { opacity: 0.95; }
-    100% { left: 110vw; opacity: 0; }
+    0%   { left:-30vw; opacity:0; }
+    10%  { opacity:0.95; }
+    90%  { opacity:0.95; }
+    100% { left:110vw; opacity:0; }
   }
 </style>
 </head>
 
 <body>
-  <div class="code-stage" id="stage"></div>
 
-  <script>
-    const stage = document.getElementById("stage");
+  <!-- Background overlay -->
+  <div class="code-stage" id="stage" aria-hidden="true"></div>
 
-    const snippets = [
-      "requestAnimationFrame(loop)",
-      "translateX(sceneX)",
-      "ctx.clearRect(0,0,w,h)",
-      "will-change: transform;",
-      "pointer-events: none;",
-      "overflow: hidden;",
-      "let particles = []",
-      "if (y > h) reset()",
-      "z-index: 0;",
-      "scene !== world",
-      "backstage === true",
-      "this is not reality",
-      "render before meaning",
-      "the door is open"
-    ];
+  <!-- Everything you actually scroll/read goes here -->
+  <div class="content">
+    <!-- Your site content / sections / images -->
+  </div>
 
-    function spawnLine(){
-      const el = document.createElement("div");
-      el.className = "code-line";
-      el.textContent = snippets[(Math.random() * snippets.length) | 0];
+<script>
+  const stage = document.getElementById("stage");
 
-      // Scatter across the full height
-      el.style.top = (Math.random() * 100) + "vh";
+  const snippets = [
+    "requestAnimationFrame(loop)",
+    "translateX(sceneX)",
+    "ctx.clearRect(0,0,w,h)",
+    "will-change: transform;",
+    "pointer-events: none;",
+    "overflow: hidden;",
+    "let particles = []",
+    "if (y > h) reset()",
+    "z-index: 0;",
+    "scene !== world",
+    "backstage === true",
+    "this is not reality",
+    "render before meaning",
+    "the door is open"
+  ];
 
-      // Optional: tiny vertical jitter so it doesn't feel grid-like
-      el.style.transform = `translateY(${(Math.random()*10 - 5).toFixed(1)}px)`;
+  function spawnLine(){
+    const el = document.createElement("div");
+    el.className = "code-line";
+    el.textContent = snippets[(Math.random() * snippets.length) | 0];
 
-      // Vary size + speed
-      el.style.fontSize = (12 + Math.random() * 10) + "px";
-      el.style.animationDuration = (10 + Math.random() * 18) + "s";
+    // Scatter vertically in the viewport
+    el.style.top = (Math.random() * 100) + "vh";
+    el.style.fontSize = (12 + Math.random() * 10) + "px";
+    el.style.animationDuration = (10 + Math.random() * 18) + "s";
 
-      // De-sync start times so they don't “pulse” together
-      el.style.animationDelay = (-Math.random() * 10) + "s";
+    // De-sync starts so it doesn't pulse
+    el.style.animationDelay = (-Math.random() * 10) + "s";
 
-      stage.appendChild(el);
+    stage.appendChild(el);
+    setTimeout(() => el.remove(), 32000);
+  }
 
-      // Remove after it has definitely exited
-      const ttl = 32000;
-      setTimeout(() => el.remove(), ttl);
-    }
+  setInterval(spawnLine, 220);
+</script>
 
-    // density (lower = more lines)
-    setInterval(spawnLine, 220);
-  </script>
 </body>
 </html>
