@@ -2,72 +2,68 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>DFI Backstage Code — Fixed Background</title>
+<title>DFI Backstage Code — Floating Background</title>
 
 <style>
-  html, body{
-    margin:0;
-    background:#000;
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   }
 
-  /* If you want your page to be scrollable, REMOVE this block.
-     If you want NO scrolling at all, keep it. */
-  /* body { overflow: hidden; height: 100vh; } */
-
-  /* === BACKGROUND LAYER: always in the viewport === */
-  .code-stage{
+  /* Always-on background layer */
+  #code-stage {
     position: fixed;
     inset: 0;
-    z-index: 0;            /* behind everything */
+    z-index: 0;
     pointer-events: none;
     overflow: hidden;
     background: #000;
   }
 
-  /* Your real site content goes above it */
-  .content{
+  /* Your page content goes above */
+  .content {
     position: relative;
     z-index: 1;
   }
 
-  .code-line{
-    position:absolute;
-    white-space:nowrap;
-    user-select:none;
-    pointer-events:none;
+  .code-line {
+    position: absolute;
+    white-space: nowrap;
+    user-select: none;
+    pointer-events: none;
 
-    color: rgba(235,245,255,0.92);
+    /* brighter */
+    color: rgba(235, 245, 255, 0.95);
     text-shadow:
-      0 0 6px rgba(180, 210, 255, 0.55),
+      0 0 6px rgba(180, 210, 255, 0.6),
       0 0 16px rgba(120, 170, 255, 0.35);
 
     opacity: 0;
-    will-change: left, opacity;
+    will-change: transform, opacity;
     animation: driftLR linear infinite;
   }
 
-  @keyframes driftLR{
-    0%   { left:-30vw; opacity:0; }
-    10%  { opacity:0.95; }
-    90%  { opacity:0.95; }
-    100% { left:110vw; opacity:0; }
+  /* Move right using transform (not left) */
+  @keyframes driftLR {
+    0%   { transform: translateX(0); opacity: 0; }
+    10%  { opacity: 0.95; }
+    90%  { opacity: 0.95; }
+    100% { transform: translateX(140vw); opacity: 0; }
   }
 </style>
 </head>
 
 <body>
+  <div id="code-stage" aria-hidden="true"></div>
 
-  <!-- Background overlay -->
-  <div class="code-stage" id="stage" aria-hidden="true"></div>
-
-  <!-- Everything you actually scroll/read goes here -->
   <div class="content">
-    <!-- Your site content / sections / images -->
+    <!-- your real site content here -->
   </div>
 
 <script>
-  const stage = document.getElementById("stage");
+  const stage = document.getElementById("code-stage");
 
   const snippets = [
     "requestAnimationFrame(loop)",
@@ -86,25 +82,24 @@
     "the door is open"
   ];
 
-  function spawnLine(){
+  function spawnLine() {
     const el = document.createElement("div");
     el.className = "code-line";
     el.textContent = snippets[(Math.random() * snippets.length) | 0];
 
-    // Scatter vertically in the viewport
+    // IMPORTANT: explicitly set BOTH coordinates so nothing defaults to top-left
     el.style.top = (Math.random() * 100) + "vh";
+    el.style.left = (-40 - Math.random() * 40) + "vw"; // start off-screen left
+
     el.style.fontSize = (12 + Math.random() * 10) + "px";
     el.style.animationDuration = (10 + Math.random() * 18) + "s";
-
-    // De-sync starts so it doesn't pulse
     el.style.animationDelay = (-Math.random() * 10) + "s";
 
     stage.appendChild(el);
-    setTimeout(() => el.remove(), 32000);
+    setTimeout(() => el.remove(), 35000);
   }
 
   setInterval(spawnLine, 220);
 </script>
-
 </body>
 </html>
