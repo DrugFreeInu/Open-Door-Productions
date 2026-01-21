@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>DFI Backstage Code — Floating Background</title>
 
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #000;
+  html, body{
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    background:#000;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   }
 
   /* Always-on background layer */
-  #code-stage {
+  #code-stage{
     position: fixed;
     inset: 0;
     z-index: 0;
@@ -22,54 +25,59 @@
     background: #000;
   }
 
-  /* Your page content goes above */
-  .content {
+  /* Your real site content goes above */
+  .content{
     position: relative;
     z-index: 1;
+    min-height: 100vh;
   }
 
-  .code-line {
+  .code-line{
     position: absolute;
     white-space: nowrap;
     user-select: none;
     pointer-events: none;
 
-    /* brighter */
-    color: rgba(235, 245, 255, 0.95);
+    /* brighter + readable */
+    color: rgba(235, 245, 255, 0.92);
     text-shadow:
-      0 0 6px rgba(180, 210, 255, 0.6),
+      0 0 6px rgba(180, 210, 255, 0.60),
       0 0 16px rgba(120, 170, 255, 0.35);
 
     opacity: 0;
     will-change: transform, opacity;
     animation: driftLR linear infinite;
+    transform: translateX(0);
   }
 
-  /* Move right using transform (not left) */
-  @keyframes driftLR {
+  /* Move right using transform (GPU-friendly) */
+  @keyframes driftLR{
     0%   { transform: translateX(0); opacity: 0; }
     10%  { opacity: 0.95; }
     90%  { opacity: 0.95; }
-    100% { transform: translateX(140vw); opacity: 0; }
+    100% { transform: translateX(var(--travel, 1600px)); opacity: 0; }
   }
 </style>
 </head>
 
 <body>
+  <!-- background overlay -->
   <div id="code-stage" aria-hidden="true"></div>
 
+  <!-- your content above -->
   <div class="content">
-    <!-- your real site content here -->
+    <!-- drop your site content here -->
   </div>
 
 <script>
   const stage = document.getElementById("code-stage");
 
   const snippets = [
-    "requestAnimationFrame(loop)",
     "translateX(sceneX)",
+    "requestAnimationFrame(loop)",
     "ctx.clearRect(0,0,w,h)",
     "will-change: transform;",
+    "position: absolute;",
     "pointer-events: none;",
     "overflow: hidden;",
     "let particles = []",
@@ -82,24 +90,42 @@
     "the door is open"
   ];
 
-  function spawnLine() {
+  function spawnLine(){
+    const rect = stage.getBoundingClientRect();
+
     const el = document.createElement("div");
     el.className = "code-line";
     el.textContent = snippets[(Math.random() * snippets.length) | 0];
 
-    // IMPORTANT: explicitly set BOTH coordinates so nothing defaults to top-left
-    el.style.top = (Math.random() * 100) + "vh";
-    el.style.left = (-40 - Math.random() * 40) + "vw"; // start off-screen left
+    /* Explicit pixel placement so nothing can pile at (0,0) */
+    const y = Math.random() * (rect.height - 24);
+    el.style.top = `${y}px`;
 
-    el.style.fontSize = (12 + Math.random() * 10) + "px";
-    el.style.animationDuration = (10 + Math.random() * 18) + "s";
-    el.style.animationDelay = (-Math.random() * 10) + "s";
+    /* Start off-screen left INSIDE this stage */
+    const startX = - (80 + Math.random() * 240);
+    el.style.left = `${startX}px`;
+
+    /* Travel across the whole stage width (px), not vw (prevents weirdness) */
+    el.style.setProperty("--travel", `${rect.width + 500}px`);
+
+    /* Variance */
+    el.style.fontSize = `${12 + Math.random() * 10}px`;
+    el.style.animationDuration = `${10 + Math.random() * 18}s`;
+
+    /* De-sync timing */
+    el.style.animationDelay = `${-Math.random() * 8}s`;
 
     stage.appendChild(el);
-    setTimeout(() => el.remove(), 35000);
+
+    /* Remove after it certainly exits */
+    window.setTimeout(() => el.remove(), 36000);
   }
 
-  setInterval(spawnLine, 220);
+  /* Density control (lower = more) */
+  window.setInterval(spawnLine, 180);
+
+  /* Kickstart so it doesn’t look empty on load */
+  for (let i = 0; i < 14; i++) spawnLine();
 </script>
 </body>
 </html>
