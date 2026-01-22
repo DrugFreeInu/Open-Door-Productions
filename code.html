@@ -3,78 +3,93 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DFI Backstage Code — Fixed Scatter</title>
-
+<title>DFI Backstage Code — Shadow-Proof</title>
 <style>
-  html, body{
-    margin:0;
-    padding:0;
-    background:#000;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  }
-
-  /* ===== BACKGROUND AREA =====
-     If you only want the LEFT black panel, keep width: 34vw.
-     If you want full screen, change width to 100vw.
-  */
-  #dfi-code-stage{
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 34vw;     /* <-- change to 100vw if you want full screen */
-    height: 100vh;
+  html, body {
+    margin: 0;
+    padding: 0;
     background: #000;
-    overflow: hidden;
-    pointer-events: none;
-    z-index: 0;
   }
 
-  /* your content above */
+  /* Host lives behind everything */
+  #dfi-code-host{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* Your real content sits above */
   .content{
     position: relative;
     z-index: 1;
     min-height: 100vh;
   }
-
-  .dfi-backstage-line{
-    position: absolute !important; /* hard override to prevent “pinned” behavior */
-    left: 0;
-    top: 0;
-
-    white-space: nowrap;
-    user-select: none;
-    pointer-events: none;
-
-    color: rgba(235,245,255,0.92);
-    text-shadow:
-      0 0 6px rgba(180, 210, 255, 0.60),
-      0 0 16px rgba(120, 170, 255, 0.35);
-
-    opacity: 0;
-    will-change: transform, opacity;
-    animation: dfiDriftLR linear infinite;
-    transform: translateX(0);
-  }
-
-  @keyframes dfiDriftLR{
-    0%   { transform: translateX(0); opacity: 0; }
-    10%  { opacity: 0.95; }
-    90%  { opacity: 0.95; }
-    100% { transform: translateX(var(--dfi-travel, 1600px)); opacity: 0; }
-  }
 </style>
 </head>
 
 <body>
-  <div id="dfi-code-stage" aria-hidden="true"></div>
+  <!-- BACKGROUND CODE HOST -->
+  <div id="dfi-code-host" aria-hidden="true"></div>
 
+  <!-- YOUR CONTENT ABOVE -->
   <div class="content">
-    <!-- your real site content here -->
+    <!-- your site / pan scene / snow / etc -->
   </div>
 
 <script>
 (() => {
-  const stage = document.getElementById("dfi-code-stage");
+  const host = document.getElementById("dfi-code-host");
+
+  // Shadow DOM: prevents your site CSS from touching the code lines
+  const shadow = host.attachShadow({ mode: "open" });
+
+  shadow.innerHTML = `
+    <style>
+      :host{ all: initial; }
+      .layer{
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        background: transparent;
+      }
+
+      .line{
+        position: absolute !important;
+        left: 0;
+        top: 0;
+
+        display: block;
+        white-space: nowrap !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        color: rgba(235, 245, 255, 0.92);
+        text-shadow:
+          0 0 6px rgba(180, 210, 255, 0.60),
+          0 0 16px rgba(120, 170, 255, 0.35);
+
+        opacity: 0;
+        will-change: transform, opacity;
+        transform: translateX(0);
+        animation: drift linear infinite;
+      }
+
+      @keyframes drift{
+        0%   { transform: translateX(0); opacity: 0; }
+        10%  { opacity: 0.95; }
+        90%  { opacity: 0.95; }
+        100% { transform: translateX(var(--travel, 1600px)); opacity: 0; }
+      }
+    </style>
+    <div class="layer" id="layer"></div>
+  `;
+
+  const layer = shadow.getElementById("layer");
 
   const snippets = [
     "requestAnimationFrame(loop)",
@@ -93,46 +108,43 @@
     "the door is open"
   ];
 
-  function safeRect() {
-    const r = stage.getBoundingClientRect();
-    // Fallbacks prevent NaN/0-height issues that cause top-left stacking
+  function rectSafe(){
+    const r = host.getBoundingClientRect();
     const w = Math.max(1, r.width || window.innerWidth);
     const h = Math.max(1, r.height || window.innerHeight);
     return { w, h };
   }
 
-  function spawnLine(){
-    const { w, h } = safeRect();
+  function spawn(){
+    const { w, h } = rectSafe();
 
     const el = document.createElement("div");
-    el.className = "dfi-backstage-line";
+    el.className = "line";
     el.textContent = snippets[(Math.random() * snippets.length) | 0];
 
-    // Explicit pixel placement (prevents pile-up)
-    const y = Math.floor(Math.random() * Math.max(1, (h - 24)));
-    el.style.top = y + "px";
+    // Explicit scatter (px) so nothing can collapse to top-left
+    el.style.top  = Math.floor(Math.random() * Math.max(1, h - 24)) + "px";
+    el.style.left = (-120 - Math.random() * 300) + "px"; // off-screen start
 
-    // Start off-screen left in px
-    const startX = - (80 + Math.random() * 260);
-    el.style.left = startX + "px";
+    // Travel distance in px (not vw) so it works in any layout
+    el.style.setProperty("--travel", (w + 600) + "px");
 
-    // Travel across the stage width
-    el.style.setProperty("--dfi-travel", (w + 520) + "px");
-
-    // Variance
+    // Brighter + readable size
     el.style.fontSize = (12 + Math.random() * 10) + "px";
+
+    // Speed + desync
     el.style.animationDuration = (10 + Math.random() * 18) + "s";
     el.style.animationDelay = (-Math.random() * 8) + "s";
 
-    stage.appendChild(el);
+    layer.appendChild(el);
     setTimeout(() => el.remove(), 36000);
   }
 
-  // Kickstart
-  for (let i = 0; i < 16; i++) spawnLine();
+  // Kickstart so it doesn't look empty
+  for (let i = 0; i < 18; i++) spawn();
 
-  // Density
-  setInterval(spawnLine, 170);
+  // Density (lower = more lines)
+  setInterval(spawn, 170);
 })();
 </script>
 </body>
