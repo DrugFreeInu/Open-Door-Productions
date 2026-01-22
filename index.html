@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>DFI World Snow Pan</title>
 
   <style>
@@ -28,13 +29,14 @@
       z-index: 0;
     }
 
-    .code-layer {
+    /* Code host sits above backstage, below pan-layer */
+    #dfi-code-host {
       position: absolute;
       inset: 0;
-      border: none;
-      background: transparent;
-      z-index: 0;
+      z-index: 0;            /* same as backstage, but later in DOM => above */
       pointer-events: none;
+      overflow: hidden;
+      background: transparent;
     }
 
     .pan-layer {
@@ -70,12 +72,12 @@
 </head>
 
 <body>
-
 <div class="viewport">
 
   <div class="backstage"></div>
 
-  <iframe src="code.html" class="code-layer" tabindex="-1"></iframe>
+  <!-- REPLACES iframe src="code.html" -->
+  <div id="dfi-code-host" aria-hidden="true"></div>
 
   <div class="pan-layer" id="pan">
     <img
@@ -83,103 +85,212 @@
       class="bg-image"
       src="E85291DD-8424-44F6-B1B1-B6FA7CEAB9E0.png"
       draggable="false"
+      alt=""
     >
     <canvas id="snow" class="snow-canvas"></canvas>
   </div>
+
 </div>
 
 <script>
-  /* ======================
-     SMOOTH BUT DIRECT PAN
-  ====================== */
-  const pan = document.getElementById("pan");
+/* ======================
+   SMOOTH BUT DIRECT PAN
+====================== */
+const pan = document.getElementById("pan");
 
-  let targetX = 0;
-  let renderX = 0;
+let targetX = 0;
+let renderX = 0;
 
-  let startX = 0;
-  let baseX = 0;
-  let dragging = false;
+let startX = 0;
+let baseX = 0;
+let dragging = false;
 
-  const smooth = 0.18; // higher = tighter / more direct
+const smooth = 0.18; // higher = tighter / more direct
 
-  /* Wheel */
-  window.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    targetX -= e.deltaY;
-  }, { passive: false });
+/* Wheel */
+window.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  targetX -= e.deltaY;
+}, { passive: false });
 
-  /* Touch */
-  window.addEventListener("touchstart", (e) => {
-    dragging = true;
-    startX = e.touches[0].clientX;
-    baseX = targetX;
-  }, { passive: true });
+/* Touch */
+window.addEventListener("touchstart", (e) => {
+  dragging = true;
+  startX = e.touches[0].clientX;
+  baseX = targetX;
+}, { passive: true });
 
-  window.addEventListener("touchmove", (e) => {
-    if (!dragging) return;
-    const dx = e.touches[0].clientX - startX;
-    targetX = baseX + dx;
-  }, { passive: true });
+window.addEventListener("touchmove", (e) => {
+  if (!dragging) return;
+  const dx = e.touches[0].clientX - startX;
+  targetX = baseX + dx;
+}, { passive: true });
 
-  window.addEventListener("touchend", () => {
-    dragging = false;
-  });
+window.addEventListener("touchend", () => {
+  dragging = false;
+});
 
-  /* Render loop */
-  function animate() {
-    renderX += (targetX - renderX) * smooth;
-    pan.style.transform = `translateX(${renderX}px)`;
-    requestAnimationFrame(animate);
-  }
+/* Render loop */
+function animate() {
+  renderX += (targetX - renderX) * smooth;
+  pan.style.transform = `translateX(${renderX}px)`;
+  requestAnimationFrame(animate);
+}
+animate();
 
-  animate();
 
-  /* ======================
-     WORLD SNOW
-  ====================== */
-  const img = document.getElementById("bg");
-  const canvas = document.getElementById("snow");
-  const ctx = canvas.getContext("2d");
+/* ======================
+   BACKSTAGE FLOATING CODE
+   (Shadow DOM so nothing can override it)
+====================== */
+(() => {
+  const host = document.getElementById("dfi-code-host");
+  const shadow = host.attachShadow({ mode: "open" });
 
-  let particles = [];
-
-  function resizeSnow() {
-    canvas.width = img.offsetWidth;
-    canvas.height = window.innerHeight;
-
-    particles = Array.from({ length: 400 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 2 + 1,
-      d: Math.random() * 1 + 0.5
-    }));
-  }
-
-  img.onload = resizeSnow;
-  window.addEventListener("resize", resizeSnow);
-
-  function drawSnow() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-
-    for (const p of particles) {
-      ctx.moveTo(p.x, p.y);
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      p.y += p.d;
-
-      if (p.y > canvas.height) {
-        p.y = -5;
-        p.x = Math.random() * canvas.width;
+  shadow.innerHTML = `
+    <style>
+      .layer{
+        position:absolute;
+        inset:0;
+        overflow:hidden;
+        pointer-events:none;
       }
-    }
 
-    ctx.fill();
-    requestAnimationFrame(drawSnow);
+      .line{
+        position:absolute !important;
+        left:0;
+        top:0;
+
+        display:block;
+        white-space:nowrap !important;
+        word-break:normal !important;
+        overflow-wrap:normal !important;
+
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 14px;
+
+        color: rgba(235,245,255,0.92);
+        text-shadow:
+          0 0 6px rgba(180, 210, 255, 0.60),
+          0 0 16px rgba(120, 170, 255, 0.35);
+
+        opacity:0;
+        will-change: transform, opacity;
+        transform: translateX(0);
+        animation: drift linear infinite;
+      }
+
+      @keyframes drift{
+        0%   { transform: translateX(0); opacity:0; }
+        10%  { opacity:0.95; }
+        90%  { opacity:0.95; }
+        100% { transform: translateX(var(--travel, 1600px)); opacity:0; }
+      }
+    </style>
+    <div class="layer" id="layer"></div>
+  `;
+
+  const layer = shadow.getElementById("layer");
+
+  const snippets = [
+    "requestAnimationFrame(loop)",
+    "translateX(sceneX)",
+    "ctx.clearRect(0,0,w,h)",
+    "will-change: transform;",
+    "pointer-events: none;",
+    "overflow: hidden;",
+    "let particles = []",
+    "if (y > h) reset()",
+    "z-index: 0;",
+    "scene !== world",
+    "backstage === true",
+    "this is not reality",
+    "render before meaning",
+    "the door is open"
+  ];
+
+  function rectSafe(){
+    const r = host.getBoundingClientRect();
+    const w = Math.max(1, r.width || window.innerWidth);
+    const h = Math.max(1, r.height || window.innerHeight);
+    return { w, h };
   }
 
-  drawSnow();
+  function spawn(){
+    const { w, h } = rectSafe();
+
+    const el = document.createElement("div");
+    el.className = "line";
+    el.textContent = snippets[(Math.random() * snippets.length) | 0];
+
+    // Explicit pixel placement (prevents top-left pile)
+    el.style.top  = Math.floor(Math.random() * Math.max(1, h - 24)) + "px";
+    el.style.left = (-120 - Math.random() * 320) + "px";
+
+    // Travel across the host width in px (not vw)
+    el.style.setProperty("--travel", (w + 700) + "px");
+
+    // Variance
+    el.style.fontSize = (12 + Math.random() * 10) + "px";
+    el.style.animationDuration = (10 + Math.random() * 18) + "s";
+    el.style.animationDelay = (-Math.random() * 8) + "s";
+
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), 36000);
+  }
+
+  // Kickstart
+  for (let i = 0; i < 18; i++) spawn();
+
+  // Density
+  setInterval(spawn, 170);
+})();
+
+
+/* ======================
+   WORLD SNOW
+====================== */
+const img = document.getElementById("bg");
+const canvas = document.getElementById("snow");
+const ctx = canvas.getContext("2d");
+
+let particles = [];
+
+function resizeSnow() {
+  canvas.width = img.offsetWidth;
+  canvas.height = window.innerHeight;
+
+  particles = Array.from({ length: 400 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 2 + 1,
+    d: Math.random() * 1 + 0.5
+  }));
+}
+
+img.onload = resizeSnow;
+window.addEventListener("resize", resizeSnow);
+
+function drawSnow() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+
+  for (const p of particles) {
+    ctx.moveTo(p.x, p.y);
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    p.y += p.d;
+
+    if (p.y > canvas.height) {
+      p.y = -5;
+      p.x = Math.random() * canvas.width;
+    }
+  }
+
+  ctx.fill();
+  requestAnimationFrame(drawSnow);
+}
+drawSnow();
 </script>
 
 </body>
