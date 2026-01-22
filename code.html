@@ -3,81 +3,84 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DFI Backstage Code — Floating Background</title>
+<title>DFI Backstage Code — Fixed Scatter</title>
 
 <style>
   html, body{
     margin:0;
     padding:0;
-    width:100%;
-    height:100%;
     background:#000;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   }
 
-  /* Always-on background layer */
-  #code-stage{
+  /* ===== BACKGROUND AREA =====
+     If you only want the LEFT black panel, keep width: 34vw.
+     If you want full screen, change width to 100vw.
+  */
+  #dfi-code-stage{
     position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
+    top: 0;
+    left: 0;
+    width: 34vw;     /* <-- change to 100vw if you want full screen */
+    height: 100vh;
     background: #000;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
   }
 
-  /* Your real site content goes above */
+  /* your content above */
   .content{
     position: relative;
     z-index: 1;
     min-height: 100vh;
   }
 
-  .code-line{
-    position: absolute;
+  .dfi-backstage-line{
+    position: absolute !important; /* hard override to prevent “pinned” behavior */
+    left: 0;
+    top: 0;
+
     white-space: nowrap;
     user-select: none;
     pointer-events: none;
 
-    /* brighter + readable */
-    color: rgba(235, 245, 255, 0.92);
+    color: rgba(235,245,255,0.92);
     text-shadow:
       0 0 6px rgba(180, 210, 255, 0.60),
       0 0 16px rgba(120, 170, 255, 0.35);
 
     opacity: 0;
     will-change: transform, opacity;
-    animation: driftLR linear infinite;
+    animation: dfiDriftLR linear infinite;
     transform: translateX(0);
   }
 
-  /* Move right using transform (GPU-friendly) */
-  @keyframes driftLR{
+  @keyframes dfiDriftLR{
     0%   { transform: translateX(0); opacity: 0; }
     10%  { opacity: 0.95; }
     90%  { opacity: 0.95; }
-    100% { transform: translateX(var(--travel, 1600px)); opacity: 0; }
+    100% { transform: translateX(var(--dfi-travel, 1600px)); opacity: 0; }
   }
 </style>
 </head>
 
 <body>
-  <!-- background overlay -->
-  <div id="code-stage" aria-hidden="true"></div>
+  <div id="dfi-code-stage" aria-hidden="true"></div>
 
-  <!-- your content above -->
   <div class="content">
-    <!-- drop your site content here -->
+    <!-- your real site content here -->
   </div>
 
 <script>
-  const stage = document.getElementById("code-stage");
+(() => {
+  const stage = document.getElementById("dfi-code-stage");
 
   const snippets = [
-    "translateX(sceneX)",
     "requestAnimationFrame(loop)",
+    "translateX(sceneX)",
     "ctx.clearRect(0,0,w,h)",
     "will-change: transform;",
-    "position: absolute;",
     "pointer-events: none;",
     "overflow: hidden;",
     "let particles = []",
@@ -90,42 +93,47 @@
     "the door is open"
   ];
 
-  function spawnLine(){
-    const rect = stage.getBoundingClientRect();
-
-    const el = document.createElement("div");
-    el.className = "code-line";
-    el.textContent = snippets[(Math.random() * snippets.length) | 0];
-
-    /* Explicit pixel placement so nothing can pile at (0,0) */
-    const y = Math.random() * (rect.height - 24);
-    el.style.top = `${y}px`;
-
-    /* Start off-screen left INSIDE this stage */
-    const startX = - (80 + Math.random() * 240);
-    el.style.left = `${startX}px`;
-
-    /* Travel across the whole stage width (px), not vw (prevents weirdness) */
-    el.style.setProperty("--travel", `${rect.width + 500}px`);
-
-    /* Variance */
-    el.style.fontSize = `${12 + Math.random() * 10}px`;
-    el.style.animationDuration = `${10 + Math.random() * 18}s`;
-
-    /* De-sync timing */
-    el.style.animationDelay = `${-Math.random() * 8}s`;
-
-    stage.appendChild(el);
-
-    /* Remove after it certainly exits */
-    window.setTimeout(() => el.remove(), 36000);
+  function safeRect() {
+    const r = stage.getBoundingClientRect();
+    // Fallbacks prevent NaN/0-height issues that cause top-left stacking
+    const w = Math.max(1, r.width || window.innerWidth);
+    const h = Math.max(1, r.height || window.innerHeight);
+    return { w, h };
   }
 
-  /* Density control (lower = more) */
-  window.setInterval(spawnLine, 180);
+  function spawnLine(){
+    const { w, h } = safeRect();
 
-  /* Kickstart so it doesn’t look empty on load */
-  for (let i = 0; i < 14; i++) spawnLine();
+    const el = document.createElement("div");
+    el.className = "dfi-backstage-line";
+    el.textContent = snippets[(Math.random() * snippets.length) | 0];
+
+    // Explicit pixel placement (prevents pile-up)
+    const y = Math.floor(Math.random() * Math.max(1, (h - 24)));
+    el.style.top = y + "px";
+
+    // Start off-screen left in px
+    const startX = - (80 + Math.random() * 260);
+    el.style.left = startX + "px";
+
+    // Travel across the stage width
+    el.style.setProperty("--dfi-travel", (w + 520) + "px");
+
+    // Variance
+    el.style.fontSize = (12 + Math.random() * 10) + "px";
+    el.style.animationDuration = (10 + Math.random() * 18) + "s";
+    el.style.animationDelay = (-Math.random() * 8) + "s";
+
+    stage.appendChild(el);
+    setTimeout(() => el.remove(), 36000);
+  }
+
+  // Kickstart
+  for (let i = 0; i < 16; i++) spawnLine();
+
+  // Density
+  setInterval(spawnLine, 170);
+})();
 </script>
 </body>
 </html>
